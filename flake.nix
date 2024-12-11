@@ -87,11 +87,11 @@
 
     mkZen = system: let
       pkgs = pkgsForSystem system;
-      isDarwin = pkgs.stdenv.isDarwin;
-      variant = if isDarwin then system else "specific";
-      downloadData = downloadUrl."${variant}";
+      inherit (pkgs) stdenv;
+      inherit (stdenv) isDarwin;
+      downloadData = downloadUrl."${system}";
     in
-      pkgs.stdenv.mkDerivation {
+      stdenv.mkDerivation {
         inherit version;
         pname = "zen-browser";
 
