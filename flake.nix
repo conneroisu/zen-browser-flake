@@ -1,6 +1,4 @@
 {
-  description = "Zen Browser";
-
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
   };
@@ -9,7 +7,9 @@
     self,
     nixpkgs,
   }: let
-    supportedSystems = [ "x86_64-linux" "x86_64-darwin" "aarch64-darwin" ];
+    pname = "zen-browser";
+    description = "Zen Browser: Experience tranquillity while browsing the web without people tracking you!";
+    supportedSystems = ["x86_64-linux" "x86_64-darwin" "aarch64-darwin"];
     forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
     version = "1.0.2-b.0";
     downloadUrl = {
@@ -31,59 +31,66 @@
         # nix-prefetch-url  https://github.com/zen-browser/desktop/releases/download/1.0.2-b.0/zen.macos-x86_64.dmg
         sha256 = "sha256:19i8kdn0i9m0amc9g7h88pf798v13h3nidw7k4x2s8axgyy5zmbg";
       };
+      "aarch64-linux" = {
+        url = "https://github.com/zen-browser/desktop/releases/download/${version}/zen.linux-aarch64.tar.bz2";
+        # https://github.com/zen-browser/desktop/releases/download/1.0.2-b.0/zen.linux-aarch64.tar.gz
+        # nix-prefetch-url --type sha256  https://github.com/zen-browser/desktop/releases/download/1.0.2-b.0/zen.linux-aarch64.tar.gz
+        sha256 = "sha256:07h65f9q6vr7zbkv5vai9w7gq8hdf2ph9ya4i5cl3fy2vjkvr1jd";
+      };
     };
 
-    pkgsForSystem = system: import nixpkgs { inherit system; };
+    pkgsForSystem = system: import nixpkgs {inherit system;};
 
-    linuxRuntimeLibs = pkgs: with pkgs;
-      [
-        libGL
-        libGLU
-        libevent
-        libffi
-        libjpeg
-        libpng
-        libstartup_notification
-        libvpx
-        libwebp
-        stdenv.cc.cc
-        fontconfig
-        libxkbcommon
-        zlib
-        freetype
-        gtk3
-        libxml2
-        dbus
-        xcb-util-cursor
-        alsa-lib
-        libpulseaudio
-        pango
-        atk
-        cairo
-        gdk-pixbuf
-        glib
-        udev
-        libva
-        mesa
-        libnotify
-        cups
-        pciutils
-        ffmpeg
-        libglvnd
-        pipewire
-      ]
-      ++ (with pkgs.xorg; [
-        libxcb
-        libX11
-        libXcursor
-        libXrandr
-        libXi
-        libXext
-        libXcomposite
-        libXdamage
-        libXfixes
-        libXScrnSaver
-      ]);
+    linuxRuntimeLibs = pkgs:
+      with pkgs;
+        [
+          libGL
+          libGLU
+          libevent
+          libffi
+          libjpeg
+          libpng
+          libstartup_notification
+          libvpx
+          libwebp
+          stdenv.cc.cc
+          fontconfig
+          libxkbcommon
+          zlib
+          freetype
+          gtk3
+          libxml2
+          dbus
+          xcb-util-cursor
+          alsa-lib
+          libpulseaudio
+          pango
+          atk
+          cairo
+          gdk-pixbuf
+          glib
+          udev
+          libva
+          mesa
+          libnotify
+          cups
+          pciutils
+          ffmpeg
+          libglvnd
+          pipewire
+        ]
+        ++ (with pkgs.xorg; [
+          libxcb
+          libX11
+          libXcursor
+          libXrandr
+          libXi
+          libXext
+          libXcomposite
+          libXdamage
+          libXfixes
+          libXScrnSaver
+        ]);
 
     mkZen = system: let
       pkgs = pkgsForSystem system;
@@ -92,43 +99,53 @@
       downloadData = downloadUrl."${system}";
     in
       stdenv.mkDerivation {
-        inherit version;
-        pname = "zen-browser";
+        inherit version pname description;
 
-        src = if isDarwin
-          then pkgs.fetchurl {
-            inherit (downloadData) url sha256;
-            name = "zen-${version}.dmg";
-          }
-          else builtins.fetchTarball {
-            inherit (downloadData) url sha256;
-          };
+        src =
+          if isDarwin
+          then
+            pkgs.fetchurl {
+              inherit (downloadData) url sha256;
+              name = "zen-${version}.dmg";
+            }
+          else
+            builtins.fetchTarball {
+              inherit (downloadData) url sha256;
+            };
 
         desktopSrc = ./.;
 
-        phases = if isDarwin
-          then [ "unpackPhase" "installPhase" ]
-          else [ "installPhase" "fixupPhase" ];
+        phases =
+          if isDarwin
+          then ["unpackPhase" "installPhase"]
+          else ["installPhase" "fixupPhase"];
 
-        nativeBuildInputs = with pkgs; [
-          makeWrapper
-          copyDesktopItems
-        ] ++ (if isDarwin
-          then [ undmg ]
-          else [ wrapGAppsHook ]);
+        nativeBuildInputs = with pkgs;
+          [
+            makeWrapper
+            copyDesktopItems
+          ]
+          ++ (
+            if isDarwin
+            then [undmg]
+            else [wrapGAppsHook]
+          );
 
         unpackPhase = pkgs.lib.optionalString isDarwin ''
           undmg $src
         '';
 
-        installPhase = if isDarwin then ''
-          mkdir -p $out/Applications
-          cp -r "Zen Browser.app" $out/Applications/
-        '' else ''
-          mkdir -p $out/bin && cp -r $src/* $out/bin
-          install -D $desktopSrc/zen.desktop $out/share/applications/zen.desktop
-          install -D $src/browser/chrome/icons/default/default128.png $out/share/icons/hicolor/128x128/apps/zen.png
-        '';
+        installPhase =
+          if isDarwin
+          then ''
+            mkdir -p $out/Applications
+            cp -r "Zen Browser.app" $out/Applications/
+          ''
+          else ''
+            mkdir -p $out/bin && cp -r $src/* $out/bin
+            install -D $desktopSrc/zen.desktop $out/share/applications/zen.desktop
+            install -D $src/browser/chrome/icons/default/default128.png $out/share/icons/hicolor/128x128/apps/zen.png
+          '';
 
         fixupPhase = pkgs.lib.optionalString (!isDarwin) ''
           chmod 755 $out/bin/*
@@ -147,8 +164,11 @@
         '';
 
         meta = {
-          mainProgram = if isDarwin then null else "zen";
-          platforms = [ system ];
+          mainProgram =
+            if isDarwin
+            then null
+            else "zen";
+          platforms = [system];
         };
       };
   in {
