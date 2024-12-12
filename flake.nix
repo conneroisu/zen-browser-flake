@@ -9,7 +9,7 @@
   }: let
     pname = "zen-browser";
     description = "Zen Browser: Experience tranquillity while browsing the web without people tracking you!";
-    supportedSystems = ["x86_64-linux" "x86_64-darwin" "aarch64-darwin"];
+    supportedSystems = ["x86_64-linux" "x86_64-darwin" "aarch64-darwin" "aarch64-linux"];
     forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
     version = "1.0.2-b.0";
     downloadUrl = {
