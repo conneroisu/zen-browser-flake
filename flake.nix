@@ -13,7 +13,7 @@
     forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
     version = "1.0.2-b.0";
     downloadUrl = {
-      "specific" = {
+      "x86_64-linux" = {
         url = "https://github.com/zen-browser/desktop/releases/download/${version}/zen.linux-specific.tar.bz2";
         # https://github.com/zen-browser/desktop/releases/download/1.0.2-b.0/zen.linux-specific.tar.bz2
         # nix-prefetch-url --type sha256  --unpack https://github.com/zen-browser/desktop/releases/download/1.0.2-b.0/zen.linux-specific.tar.bz2
