@@ -35,6 +35,7 @@
         url = "https://github.com/zen-browser/desktop/releases/download/${version}/zen.linux-aarch64.tar.bz2";
         # https://github.com/zen-browser/desktop/releases/download/1.0.2-b.0/zen.linux-aarch64.tar.gz
         # nix-prefetch-url --type sha256  https://github.com/zen-browser/desktop/releases/download/1.0.2-b.0/zen.linux-aarch64.tar.gz
+	# nix-prefetch-url --type sha256 https://github.com/zen-browser/desktop/releases/download/1.0.2-b.0/zen.linux-aarch64.tar.bz2
         sha256 = "sha256:07h65f9q6vr7zbkv5vai9w7gq8hdf2ph9ya4i5cl3fy2vjkvr1jd";
       };
     };
