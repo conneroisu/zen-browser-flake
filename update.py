@@ -65,7 +65,7 @@ def main():
         
         # Platform mapping
         platforms = {
-            'x86_64-linux': {'pattern': 'linux-specific.tar.bz2'},
+            'x86_64-linux': {'pattern': 'linux-x86_64.tar.bz2'},
             'aarch64-darwin': {'pattern': 'macos-aarch64.dmg'},
             'x86_64-darwin': {'pattern': 'macos-x86_64.dmg'},
             'aarch64-linux': {'pattern': 'linux-aarch64.tar.bz2'}
