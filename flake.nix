@@ -1,4 +1,5 @@
 {
+  description = "conneroisu/zen-browser-flake: Experience tranquillity while browsing the web without people tracking you!";
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
   };
@@ -16,7 +17,6 @@
     #:version:
     version = "1.0.2-b.5";
     downloadUrl = {
-      # https://github.com/zen-browser/desktop/releases/download/1.0.2-b.5/zen.linux-x86_64.tar.bz2
       "x86_64-linux" = {
         url = "${baseUrl}/${version}/zen.linux-x86_64.tar.bz2";
         #:sha256:
