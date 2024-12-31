@@ -7,6 +7,7 @@
     self,
     nixpkgs,
   }: let
+    baseUrl = "https://github.com/zen-browser/desktop/releases/download";
     pname = "zen-browser";
     description = "Zen Browser: Experience tranquillity while browsing the web without people tracking you!";
     supportedSystems = ["x86_64-linux" "x86_64-darwin" "aarch64-darwin" "aarch64-linux"];
@@ -14,30 +15,20 @@
     version = "1.0.2-b.0";
     downloadUrl = {
       "x86_64-linux" = {
-        url = "https://github.com/zen-browser/desktop/releases/download/${version}/zen.linux-specific.tar.bz2";
-        # https://github.com/zen-browser/desktop/releases/download/1.0.2-b.0/zen.linux-specific.tar.bz2
-        # nix-prefetch-url --type sha256  --unpack https://github.com/zen-browser/desktop/releases/download/1.0.2-b.0/zen.linux-specific.tar.bz2
+        url = "${baseUrl}/${version}/zen.linux-specific.tar.bz2";
         sha256 = "sha256:067m7g48nfa366ajn3flphnwkx8msc034r6px8ml66mbj7awjw4x";
       };
       "aarch64-darwin" = {
-        url = "https://github.com/zen-browser/desktop/releases/download/${version}/zen.macos-aarch64.dmg";
-        # https://github.com/zen-browser/desktop/releases/download/1.0.2-b.0/zen.macos-aarch64.dmg
-        # nix-prefetch-url --type sha256  https://github.com/zen-browser/desktop/releases/download/1.0.2-b.0/zen.macos-aarch64.dmg
+        url = "${baseUrl}/${version}/zen.macos-aarch64.dmg";
         sha256 = "sha256:0zflacn4p556j52v9i2znj415ar46kv1h7i18wqg2i2kvcs53kav";
       };
       "x86_64-darwin" = {
-        url = "https://github.com/zen-browser/desktop/releases/download/${version}/zen.macos-x86_64.dmg";
-        # https://github.com/zen-browser/desktop/releases/download/1.0.2-b.0/zen.macos-x86_64.dmg
-        # nix-prefetch-url  https://github.com/zen-browser/desktop/releases/download/1.0.2-b.0/zen.macos-x86_64.dmg
+        url = "${baseUrl}/${version}/zen.macos-x86_64.dmg";
         sha256 = "sha256:19i8kdn0i9m0amc9g7h88pf798v13h3nidw7k4x2s8axgyy5zmbg";
       };
       "aarch64-linux" = {
-        url = "https://github.com/zen-browser/desktop/releases/download/${version}/zen.linux-aarch64.tar.bz2";
-        # https://github.com/zen-browser/desktop/releases/download/1.0.2-b.0/zen.linux-aarch64.tar.gz
-        # nix-prefetch-url --type sha256  https://github.com/zen-browser/desktop/releases/download/1.0.2-b.0/zen.linux-aarch64.tar.gz
-	# nix-prefetch-url --type sha256 https://github.com/zen-browser/desktop/releases/download/1.0.2-b.0/zen.linux-aarch64.tar.bz2
+        url = "${baseUrl}/${version}/zen.linux-aarch64.tar.bz2";
         sha256 = "sha256:1gzxdrb3kfhqyj03a1hd975imx92jgc72rn67xm3xw3yxa3x6isj";
-
       };
     };
 
@@ -103,17 +94,18 @@
       stdenv.mkDerivation {
         inherit version pname description;
 
-        src =
-          if isDarwin
-          then
-            pkgs.fetchurl {
-              inherit (downloadData) url sha256;
-              name = "zen-${version}.dmg";
-            }
-          else
-            builtins.fetchTarball {
-              inherit (downloadData) url sha256;
-            };
+        # Add fixed timestamp and parallel building
+        SOURCE_DATE_EPOCH = "1";
+        enableParallelBuilding = true;
+
+        # Replace fetchTarball with fetchurl
+        src = pkgs.fetchurl {
+          inherit (downloadData) url sha256;
+          name =
+            if isDarwin
+            then "zen-${version}.dmg"
+            else "zen-${version}.tar.bz2";
+        };
 
         desktopSrc = ./.;
 
@@ -129,7 +121,9 @@
           ]
           ++ (
             if isDarwin
-            then [undmg]
+            then [
+              undmg
+            ]
             else [wrapGAppsHook]
           );
 
