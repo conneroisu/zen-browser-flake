@@ -12,7 +12,7 @@
     description = "Zen Browser: Experience tranquillity while browsing the web without people tracking you!";
     supportedSystems = ["x86_64-linux" "x86_64-darwin" "aarch64-darwin" "aarch64-linux"];
     forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
-    # nix-prefetch-url --type sha256  --unpack {URL}
+    # nix-prefetch-url --type sha256 --unpack {URL}
     #:version:
     version = "1.0.2-b.5";
     downloadUrl = {
@@ -20,22 +20,22 @@
       "x86_64-linux" = {
         url = "${baseUrl}/${version}/zen.linux-x86_64.tar.bz2";
         #:sha256:
-        sha256 = "sha256:2b7cd308b76f83f55840db1f7a8870eb91a193c1408e13a5f215d4e9110ee3fb";
+        sha256 = "sha256:1xp0z86l7z661cwckgr623gwwjsy3h66900xqjq6dvgx5a3njbxi";
       };
       "aarch64-linux" = {
         url = "${baseUrl}/${version}/zen.linux-aarch64.tar.bz2";
         #:sha256:
-        sha256 = "sha256:370218ca519a9764285a158ab4c84c90000943a88d1df40e0596b14d782fc409";
+        sha256 = "sha256:1dm7la05ym41my837iyh469ccyxzf776v26hh1q835h17i3r5qcy";
       };
       "aarch64-darwin" = {
         url = "${baseUrl}/${version}/zen.macos-aarch64.dmg";
         #:sha256:
-        sha256 = "sha256:0abc439c7fa1f49618c62d65dcf41d66ea0428993bb7ba09ce35473dcd3bac75";
+        sha256 = "sha256:0xdc7g6ksirmrq4vmdrvk4l09sk63psdqr9dqqc9dx51gyf47g0a";
       };
       "x86_64-darwin" = {
         url = "${baseUrl}/${version}/zen.macos-x86_64.dmg";
         #:sha256:
-        sha256 = "sha256:4379f97f7583029c124f3914e516378cf39d272386cb394f638cb40e12e6674e";
+        sha256 = "sha256:0kk7wq90xd4ccd7kkjw64ckrvwwc6wbfa51r9w99q0l3fmzzjya3";
       };
     };
 
