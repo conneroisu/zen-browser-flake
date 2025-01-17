@@ -3,7 +3,7 @@ name: Update and Commit
 on:
   workflow_dispatch:
   schedule:
-    - cron: "0 0 * * *" # Runs daily at midnight, modify as needed
+    - cron: "0 0 * * *" # Runs daily at midnight
 
 jobs:
   run-update:
@@ -18,7 +18,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.9"
+          python-version: "3.x"
 
       # Step 3: Install dependencies (if required)
       - name: Install dependencies
@@ -32,27 +32,35 @@ jobs:
 
       # Step 5: Check for changes
       - name: Check for changes
+        id: changes
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git diff --quiet || echo "Changes detected" > changes_detected.txt
-        id: check_changes
+          if git diff --quiet; then
+            echo "No changes detected."
+            echo "changes-detected=false" >> $GITHUB_ENV
+          else
+            echo "Changes detected."
+            echo "changes-detected=true" >> $GITHUB_ENV
+          fi
 
-      # Step 6: Create a new branch and commit changes
+      # Step 6: Create a new branch, commit changes, and push
       - name: Commit changes
-        if: success() && steps.check_changes.outputs.changes_detected
+        if: env.changes-detected == 'true'
         run: |
           BRANCH_NAME="update-$(date +%Y%m%d%H%M%S)"
           git checkout -b "$BRANCH_NAME"
           git add .
           git commit -m "Automated update by GitHub Actions"
           git push origin "$BRANCH_NAME"
+          echo "branch=$BRANCH_NAME" >> $GITHUB_ENV
 
-      # Step 7: Notify about the new branch (optional)
-      - name: Create a pull request
+      # Step 7: Create a pull request
+      - name: Create Pull Request
+        if: env.changes-detected == 'true'
         uses: peter-evans/create-pull-request@v5
         with:
-          branch: ${{ steps.commit_changes.outputs.BRANCH_NAME }}
-          title: "Automated update"
+          branch: ${{ env.branch }}
+          title: "Automated Update"
           body: "This pull request contains automated updates."
           token: ${{ secrets.GITHUB_TOKEN }}
