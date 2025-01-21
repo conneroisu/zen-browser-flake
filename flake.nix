@@ -5,7 +5,7 @@
   };
 
   outputs = {
-    # self,
+    self,
     nixpkgs,
   }: let
     baseUrl = "https://github.com/zen-browser/desktop/releases/download";
