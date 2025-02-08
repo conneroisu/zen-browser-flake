@@ -15,7 +15,7 @@
     forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
     # nix-prefetch-url --type sha256 --unpack {URL}
     #:version:
-    version = "1.7.2b";
+    version = "1.7.5b";
     downloadUrl = {
       "x86_64-linux" = {
         url = "${baseUrl}/${version}/zen.linux-x86_64.tar.bz2";
