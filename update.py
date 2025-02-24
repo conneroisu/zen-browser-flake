@@ -91,10 +91,10 @@ def main():
 
         # Platform mapping
         platforms = {
-            "x86_64-linux": {"pattern": "linux-x86_64.tar.bz2"},
-            "aarch64-linux": {"pattern": "linux-aarch64.tar.bz2"},
-            "aarch64-darwin": {"pattern": "macos-aarch64.dmg"},
-            "x86_64-darwin": {"pattern": "macos-x86_64.dmg"},
+            "x86_64-linux": {"pattern": "zen.linux-x86_64.tar.xz"},
+            "aarch64-linux": {"pattern": "zen.linux-aarch64.tar.xz"},
+            "aarch64-darwin": {"pattern": "zen.macos-universal.dmg"},
+            "x86_64-darwin": {"pattern": "zen.macos-universal.dmg"},
         }
 
         # Read the current flake.nix
