@@ -139,6 +139,7 @@
           if isDarwin
           then ''
             mkdir -p $out/Applications
+            ls
             cp -r "Zen Browser.app" $out/Applications/
           ''
           else ''
