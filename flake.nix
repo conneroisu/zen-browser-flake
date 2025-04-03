@@ -138,9 +138,11 @@
         installPhase =
           if isDarwin
           then ''
-            mkdir -p $out/Applications
-            ls
-            cp -r "Zen Browser.app" $out/Applications/
+            set -x  # Enables command tracing
+                      mkdir -p $out/Applications
+                      ls >&2
+                      cp -r "Zen.app" $out/Applications/
+                        set +x  # Disables command tracing when you're done
           ''
           else ''
             mkdir -p $out/bin && cp -r $src/* $out/bin
