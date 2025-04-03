@@ -15,27 +15,27 @@
     forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
     # nix-prefetch-url --type sha256 --unpack {URL}
     #:version:
-    version = "1.9b";
+    version = "1.10.3b";
     downloadUrl = {
       "x86_64-linux" = {
         url = "${baseUrl}/${version}/zen.linux-x86_64.tar.xz";
         #:sha256:
-        sha256 = "sha256:1y5gvxqgsnwm1fvy1a8adcd5k4kvw2pr3v8r6gn5nrclkl8lxm3m";
+        sha256 = "sha256:1vrxm5m4pylzhs6bilqswis0klkq7xcriwdkfl7dyv8lq4cafz1p";
       };
       "aarch64-linux" = {
         url = "${baseUrl}/${version}/zen.linux-aarch64.tar.xz";
         #:sha256:
-        sha256 = "sha256:0f5s691r2ml3l7c16g9py68kwpg6i131yizwh8s1cbxmk5276s49";
+        sha256 = "sha256:0wbnmfdm9mbkkm7ggx58zh8szclwx4z1jvzq899x54hm75i9vjbs";
       };
       "aarch64-darwin" = {
         url = "${baseUrl}/${version}/zen.macos-universal.dmg";
         #:sha256:
-        sha256 = "sha256:1qwjfkq4fb290gx02njpr8gy8cdmz1afqhc3kqzw436dy79k62r3";
+        sha256 = "sha256:00ymxs4n9xq79i6b0icjldpwyvyab1b61mhpfkygzk3b5v8km210";
       };
       "x86_64-darwin" = {
         url = "${baseUrl}/${version}/zen.macos-universal.dmg";
         #:sha256:
-        sha256 = "sha256:1qwjfkq4fb290gx02njpr8gy8cdmz1afqhc3kqzw436dy79k62r3";
+        sha256 = "sha256:00ymxs4n9xq79i6b0icjldpwyvyab1b61mhpfkygzk3b5v8km210";
       };
     };
 
