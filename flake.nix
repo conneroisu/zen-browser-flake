@@ -13,33 +13,32 @@
     description = "Zen Browser: Experience tranquillity while browsing the web without people tracking you!";
     supportedSystems = ["x86_64-linux" "x86_64-darwin" "aarch64-darwin" "aarch64-linux"];
     forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
+    pkgsForSystem = system: import nixpkgs {inherit system;};
     # nix-prefetch-url --type sha256 --unpack {URL}
     #:version:
-    version = "1.10.3b";
+    version = "1.11.5b";
     downloadUrl = {
       "x86_64-linux" = {
         url = "${baseUrl}/${version}/zen.linux-x86_64.tar.xz";
         #:sha256:
-        sha256 = "sha256:1vrxm5m4pylzhs6bilqswis0klkq7xcriwdkfl7dyv8lq4cafz1p";
+        sha256 = "sha256:1p3g4w6i3lx9s864y6jhdmw9i8g9dn46jg559k7l7kslkpqv8k9a";
       };
       "aarch64-linux" = {
         url = "${baseUrl}/${version}/zen.linux-aarch64.tar.xz";
         #:sha256:
-        sha256 = "sha256:0wbnmfdm9mbkkm7ggx58zh8szclwx4z1jvzq899x54hm75i9vjbs";
+        sha256 = "sha256:06gh993kf2mrx8cm4h9wa8b9yff3ixd1cn2wkaawz2bqk1q5qkwq";
       };
       "aarch64-darwin" = {
         url = "${baseUrl}/${version}/zen.macos-universal.dmg";
         #:sha256:
-        sha256 = "sha256:00ymxs4n9xq79i6b0icjldpwyvyab1b61mhpfkygzk3b5v8km210";
+        sha256 = "sha256:1mcj43g7ivrgx42lrdlbp71r6iiazpdc008dck5aanwn7bi5pqw8";
       };
       "x86_64-darwin" = {
         url = "${baseUrl}/${version}/zen.macos-universal.dmg";
         #:sha256:
-        sha256 = "sha256:00ymxs4n9xq79i6b0icjldpwyvyab1b61mhpfkygzk3b5v8km210";
+        sha256 = "sha256:1mcj43g7ivrgx42lrdlbp71r6iiazpdc008dck5aanwn7bi5pqw8";
       };
     };
-
-    pkgsForSystem = system: import nixpkgs {inherit system;};
 
     linuxRuntimeLibs = pkgs:
       with pkgs;
@@ -178,5 +177,18 @@
     packages = forAllSystems (system: {
       default = mkZen system;
     });
+
+    devShell = forAllSystems (system: let
+      pkgs = import nixpkgs {inherit system;};
+    in
+      pkgs.mkShell
+      {
+        packages = with pkgs; [
+          statix
+          nixd
+          nixpkgs-fmt
+          alejandra
+        ];
+      });
   };
 }
