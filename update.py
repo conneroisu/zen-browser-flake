@@ -1,8 +1,7 @@
 from typing import Any
 import requests
-import hashlib
-import tempfile
-import os
+import json
+import subprocess
 
 
 def get_latest_release() -> Any:
@@ -15,11 +14,9 @@ def get_latest_release() -> Any:
 
 def download_and_hash(url: str):
     """Download a file and calculate its SHA256 hash using nix-prefetch-url."""
-    import subprocess
-
     try:
         print(f"\nHashing URL: {url}")
-        print("-" * 80)  # Separator line for better readability
+        print("-" * 80)
 
         cmd = []
         if "dmg" in url:
@@ -28,18 +25,11 @@ def download_and_hash(url: str):
             cmd = ["nix-prefetch-url", "--type", "sha256", "--unpack", url]
 
         result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-
-        # Extract hash from stdout
         hash_value = result.stdout.strip()
 
-        # Print detailed report
         print(f"Status: Success")
-        print(f"Command: nix-prefetch-url --type sha256 --unpack {url}")
         print(f"Hash value: {hash_value}")
-        print(f"Full output:\n{result.stdout}")
-        if result.stderr:
-            print(f"Stderr output:\n{result.stderr}")
-        print("-" * 80)  # Closing separator
+        print("-" * 80)
 
         return f"sha256:{hash_value}"
     except subprocess.CalledProcessError as e:
@@ -48,38 +38,6 @@ def download_and_hash(url: str):
         print(f"Error message: {error_msg}")
         print("-" * 80)
         raise Exception(error_msg)
-
-
-def update_version(content: str, version: str):
-    """Update version using the version tag."""
-    lines = content.split("\n")
-    for i, line in enumerate(lines):
-        if "#:version:" in line:
-            # Update the next line that contains 'version ='
-            for j in range(i + 1, len(lines)):
-                if "version =" in lines[j]:
-                    lines[j] = f'    version = "{version}";'
-                    break
-    return "\n".join(lines)
-
-
-def update_hash(content: str, platform: str, hash_value: str):
-    """Update hash for a specific platform using the sha256 tag."""
-    lines = content.split("\n")
-    in_platform_block = False
-
-    for i, line in enumerate(lines):
-        if f'"{platform}" = {{' in line:
-            in_platform_block = True
-        elif in_platform_block and "#:sha256:" in line:
-            # Update the next line that contains 'sha256 ='
-            for j in range(i + 1, len(lines)):
-                if "sha256 =" in lines[j]:
-                    lines[j] = f'        sha256 = "{hash_value}";'
-                    break
-            in_platform_block = False
-
-    return "\n".join(lines)
 
 
 def main():
@@ -97,14 +55,13 @@ def main():
             "x86_64-darwin": {"pattern": "zen.macos-universal.dmg"},
         }
 
-        # Read the current flake.nix
-        with open("flake.nix", "r") as f:
-            content = f.read()
+        # Build version data structure
+        version_data = {
+            "version": version,
+            "platforms": {}
+        }
 
-        # Update version
-        content = update_version(content, str(version))
-
-        # Calculate hashes and update each platform
+        # Calculate hashes for each platform
         for platform, info in platforms.items():
             pattern = info["pattern"]
             asset = next((a for a in release["assets"] if pattern in a["name"]), None)
@@ -115,13 +72,17 @@ def main():
 
             print(f"Calculating hash for {platform}...")
             hash_value = download_and_hash(asset["browser_download_url"])
-            content = update_hash(content, platform, hash_value)
+            
+            version_data["platforms"][platform] = {
+                "url": asset["browser_download_url"],
+                "sha256": hash_value
+            }
 
-        # Write the updated content
-        with open("flake.nix", "w") as f:
-            _ = f.write(content)
+        # Write version.json
+        with open("version.json", "w") as f:
+            json.dump(version_data, f, indent=2)
 
-        print("\nFlake.nix has been updated successfully!")
+        print("\nversion.json has been updated successfully!")
         print(f"New version: {version}")
 
     except requests.exceptions.RequestException as e:

@@ -1,5 +1,6 @@
 {
   description = "conneroisu/zen-browser-flake: Experience tranquillity while browsing the web without people tracking you!";
+
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
   };
@@ -8,37 +9,21 @@
     self,
     nixpkgs,
   }: let
-    baseUrl = "https://github.com/zen-browser/desktop/releases/download";
     pname = "zen-browser";
     description = "Zen Browser: Experience tranquillity while browsing the web without people tracking you!";
     supportedSystems = ["x86_64-linux" "x86_64-darwin" "aarch64-darwin" "aarch64-linux"];
     forAllSystems = nixpkgs.lib.genAttrs supportedSystems;
     pkgsForSystem = system: import nixpkgs {inherit system;};
-    # nix-prefetch-url --type sha256 --unpack {URL}
-    #:version:
-    version = "1.13.2b";
-    downloadUrl = {
-      "x86_64-linux" = {
-        url = "${baseUrl}/${version}/zen.linux-x86_64.tar.xz";
-        #:sha256:
-        sha256 = "sha256:0hmb3zxjn961nd6c0ry5mbcr2iq38i1rvqs31qg99c7mcsv6zjal";
-      };
-      "aarch64-linux" = {
-        url = "${baseUrl}/${version}/zen.linux-aarch64.tar.xz";
-        #:sha256:
-        sha256 = "sha256:1g0mzi0hs9xmpmpqkr2gqkwl8psflif55imcciy3p032qx7awjj1";
-      };
-      "aarch64-darwin" = {
-        url = "${baseUrl}/${version}/zen.macos-universal.dmg";
-        #:sha256:
-        sha256 = "sha256:1brrq4ksdwqh51f7z2vachf35h5ip85g17c2sb1gjwmwsqdazvpa";
-      };
-      "x86_64-darwin" = {
-        url = "${baseUrl}/${version}/zen.macos-universal.dmg";
-        #:sha256:
-        sha256 = "sha256:1brrq4ksdwqh51f7z2vachf35h5ip85g17c2sb1gjwmwsqdazvpa";
-      };
-    };
+
+    # Import version data from JSON file
+    versionData = builtins.fromJSON (builtins.readFile ./version.json);
+    inherit (versionData) version;
+    downloadUrl =
+      builtins.mapAttrs (platform: data: {
+        inherit (data) url;
+        inherit (data) sha256;
+      })
+      versionData.platforms;
 
     linuxRuntimeLibs = pkgs:
       with pkgs;
@@ -112,7 +97,7 @@
               inherit (downloadData) url sha256;
             };
 
-        desktopSrc = ./.;
+        desktopSrc = self;
 
         phases =
           if isDarwin
@@ -138,10 +123,10 @@
           if isDarwin
           then ''
             set -x  # Enables command tracing
-                      mkdir -p $out/Applications
-                      ls >&2
-                      cp -r "Zen.app" $out/Applications/
-                        set +x  # Disables command tracing when you're done
+            mkdir -p $out/Applications
+            ls >&2
+            cp -r "Zen.app" $out/Applications/
+            set +x  # Disables command tracing when you're done
           ''
           else ''
             mkdir -p $out/bin && cp -r $src/* $out/bin
@@ -151,18 +136,43 @@
 
         fixupPhase = pkgs.lib.optionalString (!isDarwin) ''
           chmod 755 $out/bin/*
-          patchelf --set-interpreter "$(cat $NIX_CC/nix-support/dynamic-linker)" $out/bin/zen
-          wrapProgram $out/bin/zen --set LD_LIBRARY_PATH "${pkgs.lib.makeLibraryPath (linuxRuntimeLibs pkgs)}" \
-                          --set MOZ_LEGACY_PROFILES 1 --set MOZ_ALLOW_DOWNGRADE 1 --set MOZ_APP_LAUNCHER zen --prefix XDG_DATA_DIRS : "$GSETTINGS_SCHEMAS_PATH"
-          patchelf --set-interpreter "$(cat $NIX_CC/nix-support/dynamic-linker)" $out/bin/zen-bin
-          wrapProgram $out/bin/zen-bin --set LD_LIBRARY_PATH "${pkgs.lib.makeLibraryPath (linuxRuntimeLibs pkgs)}" \
-                          --set MOZ_LEGACY_PROFILES 1 --set MOZ_ALLOW_DOWNGRADE 1 --set MOZ_APP_LAUNCHER zen --prefix XDG_DATA_DIRS : "$GSETTINGS_SCHEMAS_PATH"
-          patchelf --set-interpreter "$(cat $NIX_CC/nix-support/dynamic-linker)" $out/bin/glxtest
-          wrapProgram $out/bin/glxtest --set LD_LIBRARY_PATH "${pkgs.lib.makeLibraryPath (linuxRuntimeLibs pkgs)}"
-          patchelf --set-interpreter "$(cat $NIX_CC/nix-support/dynamic-linker)" $out/bin/updater
-          wrapProgram $out/bin/updater --set LD_LIBRARY_PATH "${pkgs.lib.makeLibraryPath (linuxRuntimeLibs pkgs)}"
-          patchelf --set-interpreter "$(cat $NIX_CC/nix-support/dynamic-linker)" $out/bin/vaapitest
-          wrapProgram $out/bin/vaapitest --set LD_LIBRARY_PATH "${pkgs.lib.makeLibraryPath (linuxRuntimeLibs pkgs)}"
+          patchelf $out/bin/zen \
+            --set-interpreter "$(cat $NIX_CC/nix-support/dynamic-linker)"
+
+          wrapProgram $out/bin/zen \
+            --set LD_LIBRARY_PATH "${pkgs.lib.makeLibraryPath (linuxRuntimeLibs pkgs)}" \
+            --set MOZ_LEGACY_PROFILES 1 \
+            --set MOZ_ALLOW_DOWNGRADE 1 \
+            --set MOZ_APP_LAUNCHER zen \
+            --prefix XDG_DATA_DIRS : "$GSETTINGS_SCHEMAS_PATH"
+
+          patchelf $out/bin/zen-bin \
+            --set-interpreter "$(cat $NIX_CC/nix-support/dynamic-linker)"
+
+          wrapProgram $out/bin/zen-bin \
+            --set LD_LIBRARY_PATH "${pkgs.lib.makeLibraryPath (linuxRuntimeLibs pkgs)}" \
+            --set MOZ_LEGACY_PROFILES 1 \
+            --set MOZ_ALLOW_DOWNGRADE 1 \
+            --set MOZ_APP_LAUNCHER zen \
+            --prefix XDG_DATA_DIRS : "$GSETTINGS_SCHEMAS_PATH"
+
+          patchelf $out/bin/glxtest \
+            --set-interpreter "$(cat $NIX_CC/nix-support/dynamic-linker)"
+
+          wrapProgram $out/bin/glxtest \
+            --set LD_LIBRARY_PATH "${pkgs.lib.makeLibraryPath (linuxRuntimeLibs pkgs)}"
+
+          patchelf --set-interpreter \
+            "$(cat $NIX_CC/nix-support/dynamic-linker)" $out/bin/updater
+
+          wrapProgram $out/bin/updater \
+            --set LD_LIBRARY_PATH "${pkgs.lib.makeLibraryPath (linuxRuntimeLibs pkgs)}"
+
+          patchelf $out/bin/vaapitest \
+            --set-interpreter "$(cat $NIX_CC/nix-support/dynamic-linker)"
+
+          wrapProgram $out/bin/vaapitest \
+            --set LD_LIBRARY_PATH "${pkgs.lib.makeLibraryPath (linuxRuntimeLibs pkgs)}"
         '';
 
         meta = {
@@ -178,7 +188,7 @@
       default = mkZen system;
     });
 
-    devShell = forAllSystems (system: let
+    devShells.default = forAllSystems (system: let
       pkgs = import nixpkgs {inherit system;};
     in
       pkgs.mkShell
@@ -188,6 +198,8 @@
           nixd
           nixpkgs-fmt
           alejandra
+          python312
+          python312Packages.requests
         ];
       });
   };
