@@ -186,21 +186,129 @@
   in {
     packages = forAllSystems (system: {
       default = mkZen system;
+      update = let
+        pkgs = pkgsForSystem system;
+      in
+        pkgs.writeShellScriptBin "zen-update" ''
+          set -euo pipefail
+          
+          # Colors for output
+          RED='\033[0;31m'
+          GREEN='\033[0;32m'
+          YELLOW='\033[1;33m'
+          NC='\033[0m' # No Color
+          
+          echo "Fetching latest Zen Browser release..."
+          
+          # Get latest release info
+          release_data=$(${pkgs.curl}/bin/curl -s https://api.github.com/repos/zen-browser/desktop/releases/latest)
+          version=$(echo "$release_data" | ${pkgs.jq}/bin/jq -r '.tag_name')
+          
+          echo "Latest version: $version"
+          
+          # Create temporary directory for working
+          work_dir=$(mktemp -d)
+          trap "rm -rf $work_dir" EXIT
+          
+          # Platform mappings
+          declare -A patterns=(
+            ["x86_64-linux"]="zen.linux-x86_64.tar.xz"
+            ["aarch64-linux"]="zen.linux-aarch64.tar.xz"
+            ["aarch64-darwin"]="zen.macos-universal.dmg"
+            ["x86_64-darwin"]="zen.macos-universal.dmg"
+          )
+          
+          # Start building version.json
+          cat > "$work_dir/version.json" <<EOF
+          {
+            "version": "$version",
+            "platforms": {
+          EOF
+          
+          platform_count=0
+          total_platforms=4
+          
+          for platform in x86_64-linux aarch64-linux aarch64-darwin x86_64-darwin; do
+            pattern="''${patterns[$platform]}"
+            ((platform_count++))
+            
+            echo "Processing $platform..."
+            
+            # Find matching asset
+            asset_url=$(echo "$release_data" | ${pkgs.jq}/bin/jq -r ".assets[] | select(.name | contains(\"$pattern\")) | .browser_download_url")
+            
+            if [[ -z "$asset_url" || "$asset_url" == "null" ]]; then
+              echo -e "''${RED}Warning: No matching asset found for $platform''${NC}"
+              continue
+            fi
+            
+            echo "Calculating hash for $platform..."
+            echo "URL: $asset_url"
+            
+            # Calculate hash based on file type
+            if [[ "$asset_url" == *.dmg ]]; then
+              hash_value=$(${pkgs.nix}/bin/nix-prefetch-url "$asset_url")
+            else
+              hash_value=$(${pkgs.nix}/bin/nix-prefetch-url --type sha256 --unpack "$asset_url")
+            fi
+            
+            echo -e "''${GREEN}Hash: sha256:$hash_value''${NC}"
+            
+            # Add to JSON (with comma if not last)
+            comma=""
+            if [[ $platform_count -lt $total_platforms ]]; then
+              comma=","
+            fi
+            
+            cat >> "$work_dir/version.json" <<EOF
+              "$platform": {
+                "url": "$asset_url",
+                "sha256": "sha256:$hash_value"
+              }$comma
+          EOF
+          done
+          
+          # Close JSON
+          cat >> "$work_dir/version.json" <<EOF
+            }
+          }
+          EOF
+          
+          # Format JSON nicely
+          ${pkgs.jq}/bin/jq . "$work_dir/version.json" > version.json
+          
+          echo -e "''${GREEN}version.json has been updated successfully!''${NC}"
+          echo "New version: $version"
+          echo ""
+          echo "Next steps:"
+          echo "1. Review the changes: git diff version.json"
+          echo "2. Test the build: nix build"
+          echo "3. Commit the changes: git add version.json && git commit -m \"Update to $version\""
+        '';
     });
 
-    devShells.default = forAllSystems (system: let
-      pkgs = import nixpkgs {inherit system;};
-    in
-      pkgs.mkShell
-      {
+    apps = forAllSystems (system: {
+      default = {
+        type = "app";
+        program = "${self.packages.${system}.default}/bin/zen";
+      };
+      update = {
+        type = "app";
+        program = "${self.packages.${system}.update}/bin/zen-update";
+      };
+    });
+
+    devShells = forAllSystems (system: let
+      pkgs = pkgsForSystem system;
+    in {
+      default = pkgs.mkShell {
         packages = with pkgs; [
           statix
           nixd
           nixpkgs-fmt
           alejandra
-          python312
-          python312Packages.requests
         ];
-      });
+      };
+    });
   };
 }
