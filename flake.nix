@@ -1,5 +1,5 @@
 {
-  description = "conneroisu/zen-browser-flake: Experience tranquillity while browsing the web without people tracking you!";
+  description = "connerohnesorge/zen-browser-flake: Experience tranquillity while browsing the web without people tracking you!";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";

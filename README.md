@@ -6,7 +6,7 @@ Just add it to your NixOS `flake.nix` or home-manager:
 
 ```nix
 inputs = {
-  zen-browser.url = "github:conneroisu/zen-browser-flake";
+  zen-browser.url = "github:connerohnesorge/zen-browser-flake";
   ...
 }
 ```
